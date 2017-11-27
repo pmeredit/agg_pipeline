@@ -1,0 +1,41 @@
+falsy   ::= "0" | "false"
+
+truthy  ::= "1" | "true"
+
+pipline ::= stage | "[" stage ("," stage)* ","? "]" // TODO: check for trailing comma 
+
+stage ::= "{" "$collStats" ":" collStats_document "}"
+       |  "{" "$group"     ":" group_document     "}"
+       |  "{" "$project"   ":" project_document   "}"
+       |  "{" "$addFields" ":" addFields_document "}"
+       |  "{" "$lookup"    ":" lookup_document    "}"
+       |  "{" "$match"     ":" match_document     "}" 
+
+collStats_document ::= 
+
+group_document     ::= "{" "_id" : document_or_field ("," field_identifier ":" group_expression)* ","? }
+
+project_document   ::=  "{" project_inclusion ("," project_inclusion)* ","? "}"
+                      | "{" project_exclusion ("," project_exclusion)* ","? "}"
+
+project_inclusion ::=  field_identifier ":" truthy_or_agg_expression
+                         | "_id" ":" falsy
+
+project_exclusion ::= field_identifier ":" falesy
+
+addFields_document ::= "{" 
+                            field_identifier     ":" agg_expression 
+                           ("," field_identifier ":" agg_expression)* ","? 
+                       "}"
+                     | "{" "}"
+
+match_document     ::= // copy match grammar or just refer to it?
+
+//lookup_document    ::= "{"
+//                          "from" ":" <collection to join>,
+//                          "localField" ":" <field from the input documents>,
+//                          "foreignField" ":" <field from the documents of the "from" collection>,
+//                          "as" ":" <output array field>
+//"}"
+
+
