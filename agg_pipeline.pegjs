@@ -129,8 +129,9 @@ project_document  = "{" s:project_item sArr:("," project_item)* ","? "}"
 project_item =   i:id    ":" e:("0" / "false" / "1" / "true")              { return [i, ':', toBool(e)]; }
    	       / f:field ":" e:("0" / "false" / "1" / "true" / expression) { return [f, ':', toBool(e)]; } 
 
+// This allows way more than a $match actually allows.  It might make sense to either check the AST
+// for operators that aren't allowed in match, or to define this more particularly.  This is a good start.
 match "$match" = '"$match"' { return '$match'; } / "'$match'" { return '$match'; } / "$match"
-// need grammar for all of match, should support top level expressions ($and and $or)
 match_document = "{" "}" 
                      {
 		         return {};
@@ -139,7 +140,13 @@ match_document = "{" "}"
                      { 
 		         return objOfArray([s].concat(cleanAndFlatten(sArr))); 
 		     }
-match_item = f:field ":" e:expression
+match_item = field ":" expression
+           / and   ":" array
+           / or    ":" array
+	   / expr  ":" expression
+and  "$and"  = '"$and"'  { return '$and';   }  / "'$and'"    { return '$and';   }  / "$and"
+or   "$or"   = '"$or"'   { return '$or';    }  / "'$or'"     { return '$or';    }  / "$or"
+expr "$expr" = '"$expr"' { return '$expr';  }  / "'$expr'"   { return '$expr';  }  / "$expr"
 
 limit "$limit"  = '"$limit"'  { return '$limit'; }  / "'$limit'"  { return '$limit';  }  / "$limit"
 

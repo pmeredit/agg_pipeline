@@ -9,6 +9,7 @@
  {'$match' : {
                 '_id' : -1,
 		'foo' : "hello world",
+		'$or' : [{'status' : 'A'}, {'foo' : false}],
              }
  },
  {$limit : 15},
