@@ -286,12 +286,12 @@ id "_id" = '_id' / "'_id'" { return '_id' } / '"_id"' { return '_id' }
 expression = number / string / boolean / null / array / object
 
 // This is odd, but there's no other good way to allow for the optional trailing comma
-array  "array" = "[""]" 
+array  "Array" = "[""]" 
                  { return [] }
                / "[" e:expression eArr:("," expression)* ","? "]"
                  { return [e].concat(cleanAndFlatten(eArr)) }
 
-object "object" = "{""}"
+object "Object" = "{""}"
                  { return {} }
                 / "{" oi:object_item oiArr:("," object_item)* ","? "}" 
                  { 
@@ -303,13 +303,13 @@ field "Field Name" // TODO: better grammar for field names
   = f:[_A-Za-z] s:([_A-Za-z0-9]*) { return f + s.join("") }
   / string
 
-string
+string "String"
   = ["] str:(([^"\\] / "\\" . )*) ["] { return str.map(cleanBackSlashes).join("") } 
   / ['] str:(([^'\\] / "\\" . )*) ['] { return str.map(cleanBackSlashes).join("") }
 
 
 // Float must come before integer or integer will be matched when floats occur
-number = digits:[0-9]+ '.' fraction:[0-9]* { return parseFloat(digits.join("") + '.' + fraction.join("")) }
+number "Number" = digits:[0-9]+ '.' fraction:[0-9]* { return parseFloat(digits.join("") + '.' + fraction.join("")) }
        / integer
 
 integer "Integer" = positive_integer / "-" i:positive_integer { return -1 * i }
