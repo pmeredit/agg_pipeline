@@ -19,6 +19,28 @@
 	}
 	return ret;
    };
+   function toBool(e) {
+	if (e === '0' || e === 'false') {
+		return 0;
+	}
+	if (e === '1' || e === 'true') {
+		return 1;
+	}
+	return e;
+   }
+   // make sure that $project is either all inclusive or all exclusive
+   // we perform this on the initial array before changing to an object
+   // because it's easier for me
+   function checkExclusivity(arr) {
+        // only need to check for 1 or 0 because we convert "true" and "false" to 
+	// 1 and 0 resp
+   	var exclusive = arr.filter(el => el[0] !== '_id' && el[2] === 0); 
+   	var inclusive = arr.filter(el => el[2] === 1); 
+	if(exclusive.length > 0 && inclusive.length > 0) {
+	     error("Bad projection specification, cannot exclude fields other than '_id' in an inclusion projection: " + JSON.stringify(objOfArray(arr)), location());
+	}
+	return arr;
+   }
 }
 
 start
@@ -94,25 +116,10 @@ histograms = "histograms" / "'histograms'" { return 'histograms'; } / '"histogra
 project = '"$project"' { return '$project'; } / "'$project'" { return '$project'; } / "$project"
 project_document = "{" s:project_item sArr:("," project_item)* ","? "}" 
                     { 
-		       return objOfArray([s].concat(cleanAndFlatten(sArr))); 
+		       return objOfArray(checkExclusivity([s].concat(cleanAndFlatten(sArr)))); 
 		    }
-project_item =   i:id    ":" t:("0" / "false" / "1" / "true")  
-       / f:field ":" e:("0" / "false" / "1" / "true" / expression) 
-
-// Unfortunately this doesn't work like it would in LR parsing, will
-// need an AST pass to make exclusion and inclusion... exclusive (wacka wacka)
-/*
-project_document = "{" ex:exclusion_project_item exArr:("," exclusion_project_item)* ","? "}" 
-                          { return [ex].concat(cleanAndFlatten(exArr)); }
-                 / "{" inp:inclusion_project_item inArr:("," inclusion_project_item)* ","? "}" 
-                          { return [inp].concat(cleanAndFlatten(inArr)); }
-
-exclusion_project_item =   id   ":" ("0" / "false")  
-                 / field ":" ("0" / "false") 
-
-inclusion_project_item =   id    ":" ("0" / "false") 
-                 / field ":" ("1" / "true" / expression) 
-*/
+project_item =   i:id    ":" e:("0" / "false" / "1" / "true")              { return [i, ':', toBool(e)]; }
+   	       / f:field ":" e:("0" / "false" / "1" / "true" / expression) { return [f, ':', toBool(e)]; } 
 
 match = '"$match"' { return '$match'; } / "'$match'" { return '$match'; } / "$match"
 // need grammar for all of match, should support top level expressions ($and and $or)
