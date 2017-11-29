@@ -34,7 +34,10 @@ function clean(s) {
     return ret;
 }
 
-var input = clean(fs.readFileSync('test').toString());
-var output = parser.parse(input)
-console.log(JSON.stringify(output, null, 4));
-
+if (process.argv.length < 3) {
+     console.log("Must pass a file to parse")
+} else {
+     var input = clean(fs.readFileSync(process.argv[2]).toString());
+     var output = parser.parse(input)
+     console.log(JSON.stringify(output, null, 4));
+}
