@@ -33,6 +33,8 @@ pipeline =     st:stage
 	              return [st].concat(cleanAndFlatten(stArr));
 	       }
 
+// this is a dummy rule just so we don't need to write this same
+// action for every stage
 stage = sts:stage_syntax {
                            var obj = {}; 
 			   obj[sts[1]] = sts[3]; 
