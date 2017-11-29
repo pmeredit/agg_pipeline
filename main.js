@@ -1,7 +1,7 @@
 const parser = require("./agg_pipeline.js")
 const fs = require("fs")
 
-function clean(s) {
+function cleanWhiteSpace(s) {
     var ret = ''
     var inDString = false
     var inSString = false
@@ -37,7 +37,7 @@ function clean(s) {
 if (process.argv.length < 3) {
      console.log("Must pass a file to parse")
 } else {
-     var input = clean(fs.readFileSync(process.argv[2]).toString())
+     var input = cleanWhiteSpace(fs.readFileSync(process.argv[2]).toString())
      var output = parser.parse(input)
      console.log(JSON.stringify(output, null, 4))
 }
