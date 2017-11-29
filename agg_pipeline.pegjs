@@ -35,7 +35,7 @@
         // only need to check for 1 or 0 because we convert "true" and "false" to 
         // 1 and 0 resp
         var exclusive = arr.filter(el => el[0] !== '_id' && el[2] === 0) 
-        var inclusive = arr.filter(el => el[2] === 1) 
+        var inclusive = arr.filter(el => el[2] !== 0) 
         if(exclusive.length > 0 && inclusive.length > 0) {
              error("Bad projection specification, cannot exclude fields other than '_id' in an inclusion projection: " + JSON.stringify(objOfArray(arr)), location())
         }
