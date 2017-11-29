@@ -260,7 +260,7 @@ id "_id" = '_id' / "'_id'" { return '_id'; } / '"_id"' { return '_id'; }
 
 // TODO: Need to expand what can be an expression, need to add dates and whatnot
 // (though these could just be checked in AST) let/map/functions/etc 
-expression = integer / string / boolean / array / object
+expression = number / string / boolean / array / object
 
 // This is odd, but there's no other good way to allow for the optional trailing comma
 array  "array" = "[""]" 
@@ -284,6 +284,10 @@ string
   = ["] str:([^"])* ["] { return str.join(""); } 
   / ['] str:([^'])* ['] { return str.join(""); }
 
+
+// Float must come before integer or integer will be matched when floats occur
+number = digits:[0-9]+ '.' fraction:[0-9]* { return parseFloat(digits.join("") + '.' + fraction.join("")); }
+       / integer
 
 integer "Integer" = positive_integer / "-" i:positive_integer { return -1 * i; }
 

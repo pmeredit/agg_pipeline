@@ -1,6 +1,6 @@
 [
- {$project : { 'bar' : 1, 'foo' : 1, 'car' : 1 }},
- {'$project' : { 'bar' : {foo: 1, bar: [1,2,3,4], car : {'a' : [1,2,3,4]} }, 'foo' : 1, 'car' : 1 }},
+ {$project : { 'bar' : 1, 'foo' : 1, 'car' : 3.145 }},
+ {'$project' : { 'bar' : {foo: 1, bar: [1,2,3,4], car : {'a' : [1,2,3,3.1459265]} }, 'foo' : 1, 'car' : 1 }},
  {$collStats: { 
  	'latencyStats' : { 'histograms' : true },
 	storageStats : {},
