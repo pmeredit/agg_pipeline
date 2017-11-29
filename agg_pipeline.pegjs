@@ -8,60 +8,60 @@
    }
    // remove commas
    function clean(arr) {
-	var o = arr.filter(word => word !== ',');
-	return o;
+        var o = arr.filter(word => word !== ',');
+        return o;
    }
    // array will always have elements of the form [ "key", ":", "value" ]
    function objOfArray(arr) {
-    	var ret = {}
-	for(let tup of arr) {
-		ret[tup[0]] = tup[2];
-	}
-	return ret;
+        var ret = {}
+        for(let tup of arr) {
+            ret[tup[0]] = tup[2];
+        }
+        return ret;
    }
    function toBool(e) {
-	if (e === '0' || e === 'false') {
-		return 0;
-	}
-	if (e === '1' || e === 'true') {
-		return 1;
-	}
-	return e;
+        if (e === '0' || e === 'false') {
+                return 0;
+        }
+        if (e === '1' || e === 'true') {
+                return 1;
+        }
+        return e;
    }
    // make sure that $project is either all inclusive or all exclusive
    // we perform this on the initial array before changing to an object
    // because it's easier for me to just use filter
    function checkExclusivity(arr) {
         // only need to check for 1 or 0 because we convert "true" and "false" to 
-	// 1 and 0 resp
-   	var exclusive = arr.filter(el => el[0] !== '_id' && el[2] === 0); 
-   	var inclusive = arr.filter(el => el[2] === 1); 
-	if(exclusive.length > 0 && inclusive.length > 0) {
-	     error("Bad projection specification, cannot exclude fields other than '_id' in an inclusion projection: " + JSON.stringify(objOfArray(arr)), location());
-	}
-	return arr;
+        // 1 and 0 resp
+        var exclusive = arr.filter(el => el[0] !== '_id' && el[2] === 0); 
+        var inclusive = arr.filter(el => el[2] === 1); 
+        if(exclusive.length > 0 && inclusive.length > 0) {
+             error("Bad projection specification, cannot exclude fields other than '_id' in an inclusion projection: " + JSON.stringify(objOfArray(arr)), location());
+        }
+        return arr;
    }
    // check that a fieldPath starts with '$'
    function checkIsFieldPath(s) {
-	if (s.charAt(0) !== '$') {
-	     error("Field paths must begin with '$', field path was: " + s, location());
-	}
-	return s;
+        if (s.charAt(0) !== '$') {
+             error("Field paths must begin with '$', field path was: " + s, location());
+        }
+        return s;
    }
    function cleanBackSlashes(ch) {
-	if (ch instanceof Array) {
-		return ch.join("")
-	}
-	return ch
+        if (ch instanceof Array) {
+                return ch.join("")
+        }
+        return ch
    }
 }
 
 // We can have just one stage in an aggregation, or we can have an actual pipeline (array)
 start   =      st:stage                                          
                { 
-	              return [st]; 
-	       }
-	/      pipeline
+                      return [st]; 
+               }
+        /      pipeline
 
 pipeline = "[" st:stage stArr:("," stage)* ","? "]" 
             { 
@@ -72,9 +72,9 @@ pipeline = "[" st:stage stArr:("," stage)* ","? "]"
 // action for every stage
 stage = sts:stage_syntax {
                            var obj = {}; 
-			   obj[sts[1]] = sts[3]; 
-			   return obj; 
-			 } 
+                           obj[sts[1]] = sts[3]; 
+                           return obj; 
+                         } 
 
 // TODO: finish last few stages
 stage_syntax =  
@@ -105,21 +105,21 @@ stage_syntax =
 collStats "$collStats" = "$collStats" / "'$collStats'" { return '$collStats'; } / '"$collStats"' { return '$collStats'; }
 collStats_document     = "{" ci:collStats_item cArr:("," collStats_item)* ","? "}" 
                        { 
-		           return [ci].concat(cleanAndFlatten(cArr)); 
-		       }
+                           return [ci].concat(cleanAndFlatten(cArr)); 
+                       }
 collStats_item = lt:latencyStats  ":" "{" h:histograms ":" b:boolean "}" 
                 { 
-		  var obj = {}; 
-		  obj[lt] = {}, 
-		  obj[lt][h] = b; 
-		  return obj; 
-	        }
+                  var obj = {}; 
+                  obj[lt] = {}, 
+                  obj[lt][h] = b; 
+                  return obj; 
+                }
                / s:storageStats ":" "{" "}" 
-		{ 
-		  var obj = {}; 
-		  obj[s] = {}; 
-		  return obj;
-		}
+                { 
+                  var obj = {}; 
+                  obj[s] = {}; 
+                  return obj;
+                }
 
 // I wish pegjs had macros...
 latencyStats "latencyStats" = "latencyStats" / "'latencyStats'" { return 'latencyStats'; } / '"latencyStats"' { return 'latencyStats'; }
@@ -130,26 +130,26 @@ project "$project"= '"$project"' { return '$project'; } / "'$project'" { return 
 // Project actually must have at least one item
 project_document  = "{" s:project_item sArr:("," project_item)* ","? "}" 
                      { 
-		        return objOfArray(checkExclusivity([s].concat(cleanAndFlatten(sArr)))); 
-		     }
+                        return objOfArray(checkExclusivity([s].concat(cleanAndFlatten(sArr)))); 
+                     }
 project_item =   i:id    ":" e:("0" / "false" / "1" / "true")              { return [i, ':', toBool(e)]; }
-   	       / f:field ":" e:("0" / "false" / "1" / "true" / expression) { return [f, ':', toBool(e)]; } 
+               / f:field ":" e:("0" / "false" / "1" / "true" / expression) { return [f, ':', toBool(e)]; } 
 
 // This allows way more than a $match actually allows.  It might make sense to either check the AST
 // for operators that aren't allowed in match, or to define this more particularly.  This is a good start.
 match "$match" = '"$match"' { return '$match'; } / "'$match'" { return '$match'; } / "$match"
 match_document = "{" "}" 
                      {
-		         return {};
-		     }
+                         return {};
+                     }
                / "{" s:match_item sArr:("," match_item)* ","? "}" 
                      { 
-		         return objOfArray([s].concat(cleanAndFlatten(sArr))); 
-		     }
+                         return objOfArray([s].concat(cleanAndFlatten(sArr))); 
+                     }
 match_item = field ":" expression
            / and   ":" array
            / or    ":" array
-	   / expr  ":" expression
+           / expr  ":" expression
 and  "$and"  = '"$and"'  { return '$and';   }  / "'$and'"    { return '$and';   }  / "$and"
 or   "$or"   = '"$or"'   { return '$or';    }  / "'$or'"     { return '$or';    }  / "$or"
 // Yes, $expr actually allows any expression, and basically anything that isn't a document, 0, or false always
@@ -162,49 +162,49 @@ skip  "$skip"   = '"$skip"'   { return '$skip'; }   / "'$skip'"   { return '$ski
 
 unwind "$unwind"= '"$unwind"' { return '$unwind'; } / "'$unwind'" { return '$unwind'; }  / "$unwind"
 unwind_document = s:string 
-		{ return checkIsFieldPath(s); }
+                { return checkIsFieldPath(s); }
                 / "{" u:unwind_item uArr:("," unwind_item)* ","? "}" 
                 { 
                    return objOfArray([u].concat(cleanAndFlatten(uArr)));
-	        }
+                }
 unwind_item =  p:path ":" s:string    { return [p, ':', checkIsFieldPath(s)]; }
                / includeArrayIndex ":" string
                / preserveNullAndEmptyArrays ":" boolean
 path                       'path' 
-		           = '"path"' { return 'path'; } 
+                           = '"path"' { return 'path'; } 
                            / "'path'" { return 'path'; } 
-			   / "path"
+                           / "path"
 includeArrayIndex          'includeArrayIndex'       
                            = '"includeArrayIndex"' { return 'includeArrayIndex'; } 
                            / "'includeArrayIndex'" { return 'includeArrayIndex'; } 
-			   / "includeArrayIndex"
+                           / "includeArrayIndex"
 preserveNullAndEmptyArrays 'preserveNullAndEmptyArrays' 
                            = '"preserveNullAndEmptyArrays"' { return 'preserveNullAndEmptyArrays'; } 
                            / "'preserveNullAndEmptyArrays'" { return 'preserveNullAndEmptyArrays'; } 
-			   / "preserveNullAndEmptyArrays"
+                           / "preserveNullAndEmptyArrays"
 
 group "$group" = '"$group"' { return '$group'; } / "'$group'" { return '$group'; } / "$group"
 group_document ="{" g:group_item gArr:("," group_item)* ","? "}" 
                 { 
-                   return objOfArray([g].concat(cleanAndFlatten(gArr)));
-	        }
+                     return objOfArray([g].concat(cleanAndFlatten(gArr)));
+                }
 group_item     = id ":" expression
                / f:field ":" "{" a:accumulator ":" e:expression "}" 
-	       {
-                   var obj = {};
-		   obj[a] = e;
-		   return [f, ":", obj];
-	       }
+                {
+                     var obj = {};
+                     obj[a] = e;
+                     return [f, ":", obj];
+                }
 accumulator    = sum
                / avg
-	       / first
-	       / last
-	       / max
-	       / min
-	       / push
-	       / addToSet
-	       / stdDevPop
-	       / stdDevSamp
+               / first
+               / last
+               / max
+               / min
+               / push
+               / addToSet
+               / stdDevPop
+               / stdDevSamp
 sum        "$sum"        = "$sum"        / "'$sum'"        { return '$sum';       } / '"$sum"'       { return '$sum';       }
 avg        "$avg"        = "$avg"        / "'$avg'"        { return '$avg';       } / '"$avg"'       { return '$avg';       }
 first      "$first"      = "$first"      / "'$first'"      { return '$first';     } / '"$first"'     { return '$first';     }
@@ -220,39 +220,39 @@ sort "$sort" = '"$sort"' { return '$sort'; } / "'$sort'" { return '$sort'; } / "
 // need grammar for all of sort, should support top level expressions ($and and $or)
 sort_document = "{" s:sort_item sArr:("," sort_item)* ","? "}" 
                     { 
-		       return objOfArray([s].concat(cleanAndFlatten(sArr))); 
-		    }
+                       return objOfArray([s].concat(cleanAndFlatten(sArr))); 
+                    }
 sort_item = f:field ":" i:integer
 
 lookup "$lookup" = '"$lookup"' { return '$lookup'; } / "'$lookup'" { return '$lookup'; } / "$lookup"
 lookup_document = "{" l:lookup_item lArr:("," lookup_item)* ","? "}" 
                    { 
                        return objOfArray([l].concat(cleanAndFlatten(lArr)));
-	           }
+                   }
 lookup_item =  from           ":" string // TODO: perhaps check this is a valid collection
                / localField   ":" string // For some reason this doesn't need a $
                / foreignField ":" string 
                / as           ":" string
-	       / let_kw       ":" object
-	       / pipeline_kw  ":" pipeline 
+               / let_kw       ":" object
+               / pipeline_kw  ":" pipeline 
 from           "from"         = '"from"' { return 'from'; } 
                               / "'from'" { return 'from'; } 
-	                      / "from"
+                              / "from"
 localField     "localField"   = '"localField"' { return 'localField'; } 
                               / "'localField'" { return 'localField'; } 
-	                      / "localField"
+                              / "localField"
 foreignField   "foreignField" = '"foreignField"' { return 'foreignField'; } 
                               / "'foreignField'" { return 'foreignField'; } 
-	                      / "foreignField"
+                              / "foreignField"
 as             "as"           = '"as"' { return 'as'; } 
                               / "'as'" { return 'as'; } 
-	                      / "as"
+                              / "as"
 let_kw         "let"          = '"let"' { return 'let'; } 
                               / "'let'" { return 'let'; } 
-	                      / "let"
+                              / "let"
 pipeline_kw    "pipeline"     = '"pipeline"' { return 'pipeline'; } 
                               / "'pipeline'" { return 'pipeline'; } 
-	                      / "pipeline"
+                              / "pipeline"
 
 out "out" = '"$out"' { return '$out'; } / "'$out'" { return '$out'; } / "$out"
 
@@ -260,14 +260,14 @@ indexStats "$indexStats" = '"$indexStats"' { return '$indexStats'; } / "'$indexS
 // need grammar for all of indexStats, should support top level expressions ($and and $or)
 indexStats_document = "{""}" 
                     { 
-		       return {}; 
-		    }
+                       return {}; 
+                    }
 
 addFields "$addFields" = '"$addFields"' { return '$addFields'; } / "'$addFields'" { return '$addFields'; } / "$addFields"
 addFields_document = "{" a:addFields_item aArr:("," addFields_item)* ","? "}" 
                     { 
-		       return objOfArray([a].concat(cleanAndFlatten(aArr))); 
-		    }
+                       return objOfArray([a].concat(cleanAndFlatten(aArr))); 
+                    }
 addFields_item = f:field ":" expression
 
 count "$count" = '"$count"' { return '$count'; } / "'$count'" { return '$count'; } / "$count"
@@ -295,8 +295,8 @@ object "object" = "{""}"
                  { return {}; }
                 / "{" oi:object_item oiArr:("," object_item)* ","? "}" 
                  { 
-		   return objOfArray([oi].concat(cleanAndFlatten(oiArr))); 
-	 	 }
+                   return objOfArray([oi].concat(cleanAndFlatten(oiArr))); 
+                 }
 object_item = f:field ":" e:expression
 
 field "Field Name" // TODO: better grammar for field names

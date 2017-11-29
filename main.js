@@ -6,30 +6,30 @@ function clean(s) {
     var inDString = false;
     var inSString = false;
     for (var i = 0, len = s.length; i < len; i++) {
-	var ch = s.charAt(i);
-	if (inDString) {
-	    if (ch === '"') {
-		inDString = false;
-	    }
-	    ret += ch;
-	} else if (inSString) {
-	    if (ch === "'") {
-		inSString = false;
-	    }
-	    ret += ch;
-	} else {
-	    if (ch === '"') {
-		inDString = true;
-		ret += ch;
-	    } else if (ch === "'") {
-		inSString = true;
-		ret += ch;
-	    } else if (ch === ' ' || ch === "\t" || ch === "\n" || ch === "\r") {
-		continue
-	    } else {
-		ret += ch;
-	    }
-	}
+        var ch = s.charAt(i);
+        if (inDString) {
+            if (ch === '"') {
+                inDString = false;
+            }
+            ret += ch;
+        } else if (inSString) {
+            if (ch === "'") {
+                inSString = false;
+            }
+            ret += ch;
+        } else {
+            if (ch === '"') {
+                inDString = true;
+                ret += ch;
+            } else if (ch === "'") {
+                inSString = true;
+                ret += ch;
+            } else if (ch === ' ' || ch === "\t" || ch === "\n" || ch === "\r") {
+                continue
+            } else {
+                ret += ch;
+            }
+        }
     }
     return ret;
 }
