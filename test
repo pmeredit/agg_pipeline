@@ -1,9 +1,41 @@
 [
  {$project : { 'bar' : 1, 'foo' : 1, 'car' : 1 }},
- {$project : { 'bar' : 1, 'foo' : 1, 'car' : 1 }},
+ {$project : { 'bar' : 1, 'foo' : 1, 'car' : 0 }},
  {'$project' : { 'bar' : 1, 'foo' : 1, 'car' : 1 }},
  {$collStats: { 
- 	'latencyStats' : { 'histograms' : true }
+ 	'latencyStats' : { 'histograms' : true },
+	storageStats : {},
 	      }
  },
- ]
+ {'$match' : {
+                '_id' : -1,
+		'foo' : "hello world",
+             }
+ },
+ {$limit : 15},
+ {$skip : 1},
+ {$unwind : {
+      path: '$a.b',
+      includeArrayIndex: 'a.b_idx',
+      preserveNullAndEmptyArrays: true,
+      }
+  },
+  {$group : {
+    '_id' : '$foo',
+    'bar' : {'$sum' : 1},
+     car  : {$avg : 1},
+  }},
+ {$sort : {'foo' : 1, 
+            bar : -1} 
+ },
+ {$lookup : {
+              from: "inventory",
+              localField: "item",
+              foreignField: "sku",
+              as: "inventory_docs"
+            }
+ },
+ {$indexStats: {} },
+ {'$addFields' : { 'bar' : 'hello', 'foo' : 'hello world', car : 'goodbye' }},
+ {$count : 'bar'},
+]
