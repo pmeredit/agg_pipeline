@@ -52,6 +52,6 @@
             }
  },
  {$indexStats: {} },
- {'$addFields' : { 'bar' : 'hello', 'foo' : 'hello world', car : 'goodbye' }},
+ {'$addFields' : { 'bar' : 'hello', 'foo' : '\'hello\' \'world\'', car : 'goodbye' }},
  {$count : 'bar'},
 ]

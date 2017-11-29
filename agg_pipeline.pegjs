@@ -48,6 +48,12 @@
 	}
 	return s;
    }
+   function cleanBackSlashes(ch) {
+	if (ch instanceof Array) {
+		return ch.join("")
+	}
+	return ch
+   }
 }
 
 // We can have just one stage in an aggregation, or we can have an actual pipeline (array)
@@ -298,8 +304,8 @@ field "Field Name" // TODO: better grammar for field names
   / string
 
 string
-  = ["] str:([^"])* ["] { return str.join(""); } 
-  / ['] str:([^'])* ['] { return str.join(""); }
+  = ["] str:(([^"\\] / "\\" . )*) ["] { return str.map(cleanBackSlashes).join(""); } 
+  / ['] str:(([^'\\] / "\\" . )*) ['] { return str.map(cleanBackSlashes).join(""); }
 
 
 // Float must come before integer or integer will be matched when floats occur
