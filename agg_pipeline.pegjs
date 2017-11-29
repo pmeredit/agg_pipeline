@@ -320,7 +320,7 @@ positive_integer "Positive Integer"
 boolean 
   = "true" {return true} / "false" {return false} 
 
-null = "null"
+null = "null" {return null}
                                                          
                                                          
                                                          
