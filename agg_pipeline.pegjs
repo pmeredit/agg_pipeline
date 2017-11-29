@@ -121,6 +121,7 @@ storageStats "storageStats" = "storageStats" / "'storageStats'" { return 'storag
 histograms   "histograms"   = "histograms"   / "'histograms'"   { return 'histograms';   } / '"histograms"'   { return 'histograms';   }
 
 project "$project"= '"$project"' { return '$project'; } / "'$project'" { return '$project'; } / "$project"
+// Project actually must have at least one item
 project_document  = "{" s:project_item sArr:("," project_item)* ","? "}" 
                      { 
 		        return objOfArray(checkExclusivity([s].concat(cleanAndFlatten(sArr)))); 
@@ -130,10 +131,14 @@ project_item =   i:id    ":" e:("0" / "false" / "1" / "true")              { ret
 
 match "$match" = '"$match"' { return '$match'; } / "'$match'" { return '$match'; } / "$match"
 // need grammar for all of match, should support top level expressions ($and and $or)
-match_document = "{" s:match_item sArr:("," match_item)* ","? "}" 
-                    { 
-		       return objOfArray([s].concat(cleanAndFlatten(sArr))); 
-		    }
+match_document = "{" "}" 
+                     {
+		         return {};
+		     }
+               / "{" s:match_item sArr:("," match_item)* ","? "}" 
+                     { 
+		         return objOfArray([s].concat(cleanAndFlatten(sArr))); 
+		     }
 match_item = f:field ":" e:expression
 
 limit "$limit"  = '"$limit"'  { return '$limit'; }  / "'$limit'"  { return '$limit';  }  / "$limit"
@@ -243,16 +248,33 @@ addFields_document = "{" a:addFields_item aArr:("," addFields_item)* ","? "}"
 addFields_item = f:field ":" expression
 
 count "$count" = '"$count"' { return '$count'; } / "'$count'" { return '$count'; } / "$count"
-// expressions
 
+/////////////////
+// expressions //
+/////////////////
+
+// A few contexts allow only id.  Note that a context requiring id must come before field
+// in alternatives because field will also match id.  PEGs process alternatives in left to right
+// order, unlike context-free grammars, so this works.
 id "_id" = '_id' / "'_id'" { return '_id'; } / '"_id"' { return '_id'; }
 
 // TODO: Need to expand what can be an expression, need to add dates and whatnot
 // (though these could just be checked in AST) let/map/functions/etc 
 expression = integer / string / boolean / array / object
 
-array = integer
-object = integer
+// This is odd, but there's no other good way to allow for the optional trailing comma
+array  "array" = "[""]" 
+                 { return []; }
+               / "[" e:expression eArr:("," expression)* ","? "]"
+                 { return [e].concat(cleanAndFlatten(eArr)); }
+
+object "object" = "{""}"
+                 { return {}; }
+                / "{" oi:object_item oiArr:("," object_item)* ","? "}" 
+                 { 
+		   return objOfArray([oi].concat(cleanAndFlatten(oiArr))); 
+	 	 }
+object_item = f:field ":" e:expression
 
 field "Field Name" // TODO: better grammar for field names
   = f:[_A-Za-z] s:([_A-Za-z0-9]*) { return f + s.join(""); }
