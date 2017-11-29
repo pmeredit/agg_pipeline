@@ -12,6 +12,10 @@
 		'$or' : [{'status' : 'A'}, {'foo' : false}],
              }
  },
+ {'$match' : {
+                '$expr' : [],
+             }
+ },
  {$limit : 15},
  {$skip : 1},
  {$unwind : {

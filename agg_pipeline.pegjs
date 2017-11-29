@@ -146,6 +146,8 @@ match_item = field ":" expression
 	   / expr  ":" expression
 and  "$and"  = '"$and"'  { return '$and';   }  / "'$and'"    { return '$and';   }  / "$and"
 or   "$or"   = '"$or"'   { return '$or';    }  / "'$or'"     { return '$or';    }  / "$or"
+// Yes, $expr actually allows any expression, and basically anything that isn't a document, 0, or false always
+// results in matching everything
 expr "$expr" = '"$expr"' { return '$expr';  }  / "'$expr'"   { return '$expr';  }  / "$expr"
 
 limit "$limit"  = '"$limit"'  { return '$limit'; }  / "'$limit'"  { return '$limit';  }  / "$limit"
@@ -267,7 +269,7 @@ id "_id" = '_id' / "'_id'" { return '_id'; } / '"_id"' { return '_id'; }
 
 // TODO: Need to expand what can be an expression, need to add dates and whatnot
 // (though these could just be checked in AST) let/map/functions/etc 
-expression = number / string / boolean / array / object
+expression = number / string / boolean / null / array / object
 
 // This is odd, but there's no other good way to allow for the optional trailing comma
 array  "array" = "[""]" 
@@ -303,7 +305,8 @@ positive_integer "Positive Integer"
                                                          
 boolean 
   = "true" {return true;} / "false" {return false;} 
-                                                         
+
+null = "null"
                                                          
                                                          
                                                          
