@@ -19,6 +19,8 @@
       preserveNullAndEmptyArrays: true,
       }
   },
+  {'$unwind' : '$foo'
+  },
   {$group : {
     '_id' : '$foo',
     'bar' : {'$sum' : 1},

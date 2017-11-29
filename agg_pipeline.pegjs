@@ -5,12 +5,12 @@
       var o = arr.map(part => clean(part))
                  .map(arr => arr[0]);
       return o;
-   };
+   }
    // remove commas
    function clean(arr) {
 	var o = arr.filter(word => word !== ',');
 	return o;
-   };
+   }
    // array will always have elements of the form [ "key", ":", "value" ]
    function objOfArray(arr) {
     	var ret = {}
@@ -18,7 +18,7 @@
 		ret[tup[0]] = tup[2];
 	}
 	return ret;
-   };
+   }
    function toBool(e) {
 	if (e === '0' || e === 'false') {
 		return 0;
@@ -40,6 +40,13 @@
 	     error("Bad projection specification, cannot exclude fields other than '_id' in an inclusion projection: " + JSON.stringify(objOfArray(arr)), location());
 	}
 	return arr;
+   }
+   // check that a fieldPath starts with '$'
+   function checkIsFieldPath(s) {
+	if (s.charAt(0) !== '$') {
+	     error("Field paths must begin with '$', field path was: " + s, location());
+	}
+	return s;
    }
 }
 
@@ -89,11 +96,11 @@ stage_syntax =
 //       / "{" "$graphLookup"     ":" graphLookup_document  "}"
        
                      
-collStats = "$collStats" / "'$collStats'" { return '$collStats'; } / '"$collStats"' { return '$collStats'; }
-collStats_document = "{" ci:collStats_item cArr:("," collStats_item)* ","? "}" 
-                { 
-		   return [ci].concat(cleanAndFlatten(cArr)); 
-		}
+collStats "$collStats" = "$collStats" / "'$collStats'" { return '$collStats'; } / '"$collStats"' { return '$collStats'; }
+collStats_document     = "{" ci:collStats_item cArr:("," collStats_item)* ","? "}" 
+                       { 
+		           return [ci].concat(cleanAndFlatten(cArr)); 
+		       }
 collStats_item = lt:latencyStats  ":" "{" h:histograms ":" b:boolean "}" 
                 { 
 		  var obj = {}; 
@@ -109,19 +116,19 @@ collStats_item = lt:latencyStats  ":" "{" h:histograms ":" b:boolean "}"
 		}
 
 // I wish pegjs had macros...
-latencyStats = "latencyStats" / "'latencyStats'" { return 'latencyStats'; } / '"latencyStats"' { return 'latencyStats'; }
-storageStats = "storageStats" / "'storageStats'" { return 'storageStats'; } / '"storageStats"' { return 'storageStats'; }
-histograms = "histograms" / "'histograms'" { return 'histograms'; } / '"histograms"' { return 'histograms'; }
+latencyStats "latencyStats" = "latencyStats" / "'latencyStats'" { return 'latencyStats'; } / '"latencyStats"' { return 'latencyStats'; }
+storageStats "storageStats" = "storageStats" / "'storageStats'" { return 'storageStats'; } / '"storageStats"' { return 'storageStats'; }
+histograms   "histograms"   = "histograms"   / "'histograms'"   { return 'histograms';   } / '"histograms"'   { return 'histograms';   }
 
-project = '"$project"' { return '$project'; } / "'$project'" { return '$project'; } / "$project"
-project_document = "{" s:project_item sArr:("," project_item)* ","? "}" 
-                    { 
-		       return objOfArray(checkExclusivity([s].concat(cleanAndFlatten(sArr)))); 
-		    }
+project "$project"= '"$project"' { return '$project'; } / "'$project'" { return '$project'; } / "$project"
+project_document  = "{" s:project_item sArr:("," project_item)* ","? "}" 
+                     { 
+		        return objOfArray(checkExclusivity([s].concat(cleanAndFlatten(sArr)))); 
+		     }
 project_item =   i:id    ":" e:("0" / "false" / "1" / "true")              { return [i, ':', toBool(e)]; }
    	       / f:field ":" e:("0" / "false" / "1" / "true" / expression) { return [f, ':', toBool(e)]; } 
 
-match = '"$match"' { return '$match'; } / "'$match'" { return '$match'; } / "$match"
+match "$match" = '"$match"' { return '$match'; } / "'$match'" { return '$match'; } / "$match"
 // need grammar for all of match, should support top level expressions ($and and $or)
 match_document = "{" s:match_item sArr:("," match_item)* ","? "}" 
                     { 
@@ -129,30 +136,34 @@ match_document = "{" s:match_item sArr:("," match_item)* ","? "}"
 		    }
 match_item = f:field ":" e:expression
 
-limit = '"$limit"' { return '$limit'; } / "'$limit'" { return '$limit'; } / "$limit"
+limit "$limit"  = '"$limit"'  { return '$limit'; }  / "'$limit'"  { return '$limit';  }  / "$limit"
 
-skip  = '"$skip"' { return '$skip'; } / "'$skip'" { return '$skip'; } / "$skip"
+skip  "$skip"   = '"$skip"'   { return '$skip'; }   / "'$skip'"   { return '$skip';   }  / "$skip"
 
-unwind = '"$unwind"' { return '$unwind'; } / "'$unwind'" { return '$unwind'; } / "$unwind"
-unwind_document = string // field path TODO: check in AST that fieldpath begins with '$'
+unwind "$unwind"= '"$unwind"' { return '$unwind'; } / "'$unwind'" { return '$unwind'; }  / "$unwind"
+unwind_document = s:string 
+		{ return checkIsFieldPath(s); }
                 / "{" u:unwind_item uArr:("," unwind_item)* ","? "}" 
                 { 
                    return objOfArray([u].concat(cleanAndFlatten(uArr)));
 	        }
-unwind_item =  path ":" string // field path TODO: check in the AST that fieldpath begins with '$'
+unwind_item =  p:path ":" s:string    { return [p, ':', checkIsFieldPath(s)]; }
                / includeArrayIndex ":" string
                / preserveNullAndEmptyArrays ":" boolean
-path                       = '"path"' { return 'path'; } 
+path                       'path' 
+		           = '"path"' { return 'path'; } 
                            / "'path'" { return 'path'; } 
 			   / "path"
-includeArrayIndex          = '"includeArrayIndex"' { return 'includeArrayIndex'; } 
+includeArrayIndex          'includeArrayIndex'       
+                           = '"includeArrayIndex"' { return 'includeArrayIndex'; } 
                            / "'includeArrayIndex'" { return 'includeArrayIndex'; } 
 			   / "includeArrayIndex"
-preserveNullAndEmptyArrays = '"preserveNullAndEmptyArrays"' { return 'preserveNullAndEmptyArrays'; } 
+preserveNullAndEmptyArrays 'preserveNullAndEmptyArrays' 
+                           = '"preserveNullAndEmptyArrays"' { return 'preserveNullAndEmptyArrays'; } 
                            / "'preserveNullAndEmptyArrays'" { return 'preserveNullAndEmptyArrays'; } 
 			   / "preserveNullAndEmptyArrays"
 
-group          = '"$group"' { return '$group'; } / "'$group'" { return '$group'; } / "$group"
+group "$group" = '"$group"' { return '$group'; } / "'$group'" { return '$group'; } / "$group"
 group_document ="{" g:group_item gArr:("," group_item)* ","? "}" 
                 { 
                    return objOfArray([g].concat(cleanAndFlatten(gArr)));
@@ -174,18 +185,18 @@ accumulator    = sum
 	       / addToSet
 	       / stdDevPop
 	       / stdDevSamp
-sum        = "$sum" / "'$sum'" { return '$sum'; } / '"$sum"' { return '$sum'; }
-avg        = "$avg" / "'$avg'" { return '$avg'; } / '"$avg"' { return '$avg'; }
-first      = "$first" / "'$first'" { return '$first'; } / '"$first"' { return '$first'; }
-last       = "$last" / "'$last'" { return '$last'; } / '"$last"' { return '$last'; }
-max        = "$max" / "'$max'" { return '$max'; } / '"$max"' { return '$max'; }
-min        = "$min" / "'$min'" { return '$min'; } / '"$min"' { return '$min'; }
-push       = "$push" / "'$push'" { return '$push'; } / '"$push"' { return '$push'; }
-addToSet   = "$addToSet" / "'$addToSet'" { return '$addToSet'; } / '"$addToSet"' { return '$addToSet'; }
-stdDevPop  = "$stdDevPop" / "'$stdDevPop'" { return '$stdDevPop'; } / '"$stdDevPop"' { return '$stdDevPop'; }
-stdDevSamp = "$stdDevSamp" / "'$stdDevSamp'" { return '$stdDevSamp'; } / '"$stdDevSamp"' { return '$stdDevSamp'; }
+sum        "$sum"        = "$sum"        / "'$sum'"        { return '$sum';       } / '"$sum"'       { return '$sum';       }
+avg        "$avg"        = "$avg"        / "'$avg'"        { return '$avg';       } / '"$avg"'       { return '$avg';       }
+first      "$first"      = "$first"      / "'$first'"      { return '$first';     } / '"$first"'     { return '$first';     }
+last       "$last"       = "$last"       / "'$last'"       { return '$last';      } / '"$last"'      { return '$last';      }
+max        "$max"        = "$max"        / "'$max'"        { return '$max';       } / '"$max"'       { return '$max';       }
+min        "$min"        = "$min"        / "'$min'"        { return '$min';       } / '"$min"'       { return '$min';       }
+push       "$push"       = "$push"       / "'$push'"       { return '$push';      } / '"$push"'      { return '$push';      }
+addToSet   "$addToSet"   = "$addToSet"   / "'$addToSet'"   { return '$addToSet';  } / '"$addToSet"'  { return '$addToSet';  }
+stdDevPop  "$stdDevPop"  = "$stdDevPop"  / "'$stdDevPop'"  { return '$stdDevPop'; } / '"$stdDevPop"' { return '$stdDevPop'; }
+stdDevSamp "$stdDevSamp" = "$stdDevSamp" / "'$stdDevSamp'" { return '$stdDevSamp';} / '"$stdDevSamp"'{ return '$stdDevSamp';}
 
-sort = '"$sort"' { return '$sort'; } / "'$sort'" { return '$sort'; } / "$sort"
+sort "$sort" = '"$sort"' { return '$sort'; } / "'$sort'" { return '$sort'; } / "$sort"
 // need grammar for all of sort, should support top level expressions ($and and $or)
 sort_document = "{" s:sort_item sArr:("," sort_item)* ","? "}" 
                     { 
@@ -193,55 +204,57 @@ sort_document = "{" s:sort_item sArr:("," sort_item)* ","? "}"
 		    }
 sort_item = f:field ":" i:integer
 
-lookup = '"$lookup"' { return '$lookup'; } / "'$lookup'" { return '$lookup'; } / "$lookup"
-lookup_document = string // field path TODO: check in AST that fieldpath begins with '$'
-                / "{" l:lookup_item lArr:("," lookup_item)* ","? "}" 
-                { 
-                   return objOfArray([l].concat(cleanAndFlatten(lArr)));
-	        }
+lookup "$lookup" = '"$lookup"' { return '$lookup'; } / "'$lookup'" { return '$lookup'; } / "$lookup"
+lookup_document = "{" l:lookup_item lArr:("," lookup_item)* ","? "}" 
+                   { 
+                       return objOfArray([l].concat(cleanAndFlatten(lArr)));
+	           }
 lookup_item =  from ":" string // TODO: perhaps check this is a valid collection
                / localField ":" string // For some reason this doesn't need a $
                / foreignField ":" string 
                / as ":" string 
-from           = '"from"' { return 'from'; } 
-               / "'from'" { return 'from'; } 
-	       / "from"
-localField     = '"localField"' { return 'localField'; } 
-               / "'localField'" { return 'localField'; } 
-	       / "localField"
-foreignField   = '"foreignField"' { return 'foreignField'; } 
-               / "'foreignField'" { return 'foreignField'; } 
-	       / "foreignField"
-as             = '"as"' { return 'as'; } 
-               / "'as'" { return 'as'; } 
-	       / "as"
+from           "from"         = '"from"' { return 'from'; } 
+                              / "'from'" { return 'from'; } 
+	                      / "from"
+localField     "localField"   = '"localField"' { return 'localField'; } 
+                              / "'localField'" { return 'localField'; } 
+	                      / "localField"
+foreignField   "foreignField" = '"foreignField"' { return 'foreignField'; } 
+                              / "'foreignField'" { return 'foreignField'; } 
+	                      / "foreignField"
+as             "as"           = '"as"' { return 'as'; } 
+                              / "'as'" { return 'as'; } 
+	                      / "as"
 
-out = '"$out"' { return '$out'; } / "'$out'" { return '$out'; } / "$out"
+out "out" = '"$out"' { return '$out'; } / "'$out'" { return '$out'; } / "$out"
 
-indexStats = '"$indexStats"' { return '$indexStats'; } / "'$indexStats'" { return '$indexStats'; } / "$indexStats"
+indexStats "$indexStats" = '"$indexStats"' { return '$indexStats'; } / "'$indexStats'" { return '$indexStats'; } / "$indexStats"
 // need grammar for all of indexStats, should support top level expressions ($and and $or)
 indexStats_document = "{""}" 
                     { 
 		       return {}; 
 		    }
 
-addFields = '"$addFields"' { return '$addFields'; } / "'$addFields'" { return '$addFields'; } / "$addFields"
+addFields "$addFields" = '"$addFields"' { return '$addFields'; } / "'$addFields'" { return '$addFields'; } / "$addFields"
 addFields_document = "{" a:addFields_item aArr:("," addFields_item)* ","? "}" 
                     { 
 		       return objOfArray([a].concat(cleanAndFlatten(aArr))); 
 		    }
 addFields_item = f:field ":" expression
 
-count = '"$count"' { return '$count'; } / "'$count'" { return '$count'; } / "$count"
+count "$count" = '"$count"' { return '$count'; } / "'$count'" { return '$count'; } / "$count"
 // expressions
 
-id = '_id' / "'_id'" { return '_id'; } / '"_id"' { return '_id'; }
+id "_id" = '_id' / "'_id'" { return '_id'; } / '"_id"' { return '_id'; }
 
-// TODO: Need to expand what can be an expression, add arrays, documents, and perhaps 
+// TODO: Need to expand what can be an expression, need to add dates and whatnot
 // (though these could just be checked in AST) let/map/functions/etc 
-expression = integer / string / boolean
+expression = integer / string / boolean / array / object
 
-field "field name" // TODO: better grammar for field names
+array = integer
+object = integer
+
+field "Field Name" // TODO: better grammar for field names
   = f:[_A-Za-z] s:([_A-Za-z0-9]*) { return f + s.join(""); }
   / string
 

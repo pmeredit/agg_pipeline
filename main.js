@@ -36,6 +36,5 @@ function clean(s) {
 
 var input = clean(fs.readFileSync('test').toString());
 var output = parser.parse(input)
-console.log("_____");
 console.log(JSON.stringify(output, null, 4));
 
