@@ -41,6 +41,16 @@
               as: "inventory_docs"
             }
  },
+ {$lookup : {
+              from: "inventory",
+	      let: {x: 3, y:4},
+	      pipeline: [
+	                  {$match : {$expr: true}},
+			  {$project : {_id : 0}},
+			],
+              as: "inventory_docs"
+            }
+ },
  {$indexStats: {} },
  {'$addFields' : { 'bar' : 'hello', 'foo' : 'hello world', car : 'goodbye' }},
  {$count : 'bar'},

@@ -50,17 +50,17 @@
    }
 }
 
-start
-  = pipeline
-
-pipeline =     st:stage                                          
+// We can have just one stage in an aggregation, or we can have an actual pipeline (array)
+start   =      st:stage                                          
                { 
 	              return [st]; 
-	       }  
-           /  "[" st:stage stArr:("," stage)* ","? "]" 
-	       { 
-	              return [st].concat(cleanAndFlatten(stArr));
 	       }
+	/      pipeline
+
+pipeline = "[" st:stage stArr:("," stage)* ","? "]" 
+            { 
+                return [st].concat(cleanAndFlatten(stArr));
+            }
 
 // this is a dummy rule just so we don't need to write this same
 // action for every stage
@@ -223,10 +223,12 @@ lookup_document = "{" l:lookup_item lArr:("," lookup_item)* ","? "}"
                    { 
                        return objOfArray([l].concat(cleanAndFlatten(lArr)));
 	           }
-lookup_item =  from ":" string // TODO: perhaps check this is a valid collection
-               / localField ":" string // For some reason this doesn't need a $
+lookup_item =  from           ":" string // TODO: perhaps check this is a valid collection
+               / localField   ":" string // For some reason this doesn't need a $
                / foreignField ":" string 
-               / as ":" string 
+               / as           ":" string
+	       / let_kw       ":" object
+	       / pipeline_kw  ":" pipeline 
 from           "from"         = '"from"' { return 'from'; } 
                               / "'from'" { return 'from'; } 
 	                      / "from"
@@ -239,6 +241,12 @@ foreignField   "foreignField" = '"foreignField"' { return 'foreignField'; }
 as             "as"           = '"as"' { return 'as'; } 
                               / "'as'" { return 'as'; } 
 	                      / "as"
+let_kw         "let"          = '"let"' { return 'let'; } 
+                              / "'let'" { return 'let'; } 
+	                      / "let"
+pipeline_kw    "pipeline"     = '"pipeline"' { return 'pipeline'; } 
+                              / "'pipeline'" { return 'pipeline'; } 
+	                      / "pipeline"
 
 out "out" = '"$out"' { return '$out'; } / "'$out'" { return '$out'; } / "$out"
 
