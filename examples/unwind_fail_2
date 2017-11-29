@@ -1,0 +1,8 @@
+[
+ {$unwind : {
+      includeArrayIndex: 'a.b_idx',
+      preserveNullAndEmptyArrays: true,
+      path: 'a.b',
+      }
+  },
+]

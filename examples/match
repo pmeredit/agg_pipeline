@@ -1,0 +1,6 @@
+ {'$match' : {
+		'$or' : [{'status' : 'A'}, {'foo' : false}],
+                '_id' : -1,
+		'foo' : "hello world",
+             }
+ }
