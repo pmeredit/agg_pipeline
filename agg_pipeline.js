@@ -4880,7 +4880,7 @@ function peg$parse(input, options) {
      }
      // make sure that $project is either all inclusive or all exclusive
      // we perform this on the initial array before changing to an object
-     // because it's easier for me
+     // because it's easier for me to just use filter
      function checkExclusivity(arr) {
           // only need to check for 1 or 0 because we convert "true" and "false" to 
   	// 1 and 0 resp
