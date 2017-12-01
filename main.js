@@ -7,6 +7,12 @@ function cleanWhiteSpace(s) {
     var inSString = false
     for (var i = 0, len = s.length; i < len; i++) {
         var ch = s.charAt(i)
+	if (ch === '\\') {
+	    ret += ch
+	    i++
+	    ret += s.charAt(i)
+	    continue
+	}
         if (inDString) {
             if (ch === '"') {
                 inDString = false
